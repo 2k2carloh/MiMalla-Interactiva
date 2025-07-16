@@ -1,16 +1,51 @@
 const { ipcRenderer } = require('electron');
 
+const { actualizarColorSelectCategoria } = require('./module/actualizarColorSelectCategoria');
+const { guardarConfig } = require('./module/guardarConfig');
+const { actualizarContadorRamos } = require('./module/actualizarContadorRamos');
+const { ajustarLuminosidad } = require('./module/ajustarLuminosidad');
+const { cargarCategoriasSelect } = require('./module/cargarCategoriasSelect');
+const { renderListaRequisitos } = require('./module/renderListaRequisitos');
+const { abrirModalAgregarRamo } = require('./module/abrirModalAgregarRamo');
+const { abrirModalEditarRamo } = require('./module/abrirModalEditarRamo');
+const { aplicarEstiloDesdeConfig } = require('./module/aplicarEstiloDesdeConfig');
+const { abrirNota } = require('./module/abrirNota');
+const { renderNotas } = require('./module/renderNotas');
+const { actualizarDesbloqueos } = require('./module/actualizarDesbloqueos');
+const { calcularYReflejarPromedio } = require('./module/calcularYReflejarPromedio')
+const { actualizarEstadoMallaSellada } = require('./module/actualizarEstadoMallaSellada');
+const { renderMalla } = require('./module/renderMalla');
+const { abrirModalNotas } = require('./module/abrirModalNotas');
+const { getDragAfterElement } = require('./module/getDragAfterElement');
+const { calcularPonderacion } = require('./module/calcularPonderacion');
+const { guardarNuevaNota } = require('./module/guardarNuevaNota');
+
 let carrera = {
   semestres: [],
-  categorias: []
+  categorias: [],
+  estilos: {
+    fondoTipo: 'color',
+    estiloFondoPagina: '#ffffff',
+    estiloFondoSemestres: '#f1f1f1',
+    estiloTexto: '#000000',
+    estiloBordeColor: '#000000',
+    estiloBotones: '#000000',
+    fondoImagenBase64: null
+  }
 };
+
+
+
 let mallaSellada = false;
 let semestreActual = 0;
 let editandoRamo = null;
+let notaAbierta = null;
+let ramoActualNotas = null;
+let divRamoActualNotas = null;
+let dragged = null;
 
-async function guardarConfig() {
-  await ipcRenderer.invoke('guardar-config', JSON.stringify(carrera));
-}
+const panel = document.getElementById('panelEstilos');
+const btnEstilos = document.getElementById('btnEstilos');
 
 async function cargarConfig() {
   const resp = await ipcRenderer.invoke('cargar-config');
@@ -29,7 +64,6 @@ async function cargarConfig() {
     }
   }
 }
-
 
 document.getElementById('btnCrearSemestres').addEventListener('click', async () => {
   const num = parseInt(document.getElementById('numSemestres').value);
@@ -96,158 +130,6 @@ function renderCategorias() {
   });
 }
 
-function renderMalla() {
-  const container = document.getElementById('malla');
-  container.innerHTML = '';
-  const filas = [];
-  for (let i = 0; i < carrera.semestres.length; i += 5) {
-    filas.push(carrera.semestres.slice(i, i + 5));
-  }
-  filas.forEach(fila => {
-    const filaDiv = document.createElement('div');
-    filaDiv.className = 'fila-semestres';
-    fila.forEach(semestre => {
-      const indexGlobal = carrera.semestres.indexOf(semestre);
-      const divSemestre = document.createElement('div');
-      divSemestre.className = 'semestre';
-      const header = document.createElement('div');
-      header.className = 'semestre-header';
-      header.textContent = semestre.nombre;
-      divSemestre.appendChild(header);
-      semestre.ramos.forEach(ramo => {
-        const divRamo = document.createElement('div');
-        divRamo.className = 'ramo';
-        divRamo.setAttribute("draggable", "true");
-        const cat = carrera.categorias.find(c => c.id === ramo.categoriaId);
-        let baseColor = cat ? cat.color : '#74b9ff';
-        if (ramo.completado) {
-          baseColor = ajustarLuminosidad(baseColor, -70);
-        }
-        divRamo.style.background = baseColor;
-        if (!ramo.desbloqueado) divRamo.classList.add('bloqueado');
-        if (ramo.completado) divRamo.classList.add('completado');
-
-        divRamo.innerHTML = '';
-
-        const nombre = document.createElement('span');
-        nombre.textContent = ramo.nombre;
-        divRamo.appendChild(nombre);
-
-        // Mostrar promedio si existe
-        if (ramo.promedio !== undefined) {
-          const spanProm = document.createElement('span');
-          spanProm.className = 'info-promedio';
-          spanProm.textContent = `Prom: ${ramo.promedio.toFixed(2)}`;
-          spanProm.style.display = 'block';
-          spanProm.style.fontSize = '12px';
-          spanProm.style.color = ramo.promedio >= (ramo.notaMinima || 4.0) ? 'green' : 'red';
-          divRamo.appendChild(spanProm);
-        }
-
-        divRamo.onclick = async () => {
-          if (!ramo.desbloqueado) return;
-          ramo.completado = !ramo.completado;
-          actualizarDesbloqueos();
-          renderMalla();
-          await guardarConfig();
-        };
-
-        const acciones = document.createElement('div');
-        acciones.className = 'acciones';
-
-        const btnEditar = document.createElement('button');
-        btnEditar.innerHTML = `<i class="fa-solid fa-pen-to-square"></i>`;
-        btnEditar.onclick = e => {
-          e.stopPropagation();
-          abrirModalEditarRamo(indexGlobal, ramo);
-        };
-
-        const btnEliminar = document.createElement('button');
-        btnEliminar.innerHTML = `<i class="fa-solid fa-trash"></i>`;
-        btnEliminar.onclick = async e => {
-          e.stopPropagation();
-          if (confirm('¿Eliminar ramo?')) {
-            semestre.ramos = semestre.ramos.filter(r => r.id !== ramo.id);
-            renderMalla();
-            await guardarConfig();
-          }
-        };
-
-        const btnNotas = document.createElement('button');
-        btnNotas.innerHTML = `<i class="fa-solid fa-calculator"></i>`;
-        btnNotas.title = 'Calcular ponderación';
-        btnNotas.onclick = e => {
-          e.stopPropagation();
-          abrirModalNotas(ramo, divRamo);
-        };
-
-        acciones.appendChild(btnEditar);
-        acciones.appendChild(btnEliminar);
-        acciones.appendChild(btnNotas);
-        divRamo.appendChild(acciones);
-
-        divSemestre.appendChild(divRamo);
-      });
-
-      const btnAddRamo = document.createElement('button');
-      btnAddRamo.textContent = '+';
-      btnAddRamo.className = 'agregar';
-      btnAddRamo.onclick = () => abrirModalAgregarRamo(indexGlobal);
-      divSemestre.appendChild(btnAddRamo);
-      filaDiv.appendChild(divSemestre);
-    });
-    container.appendChild(filaDiv);
-  });
-
-  actualizarContadorRamos();
-  actualizarEstadoMallaSellada();
-}
-
-function abrirModalAgregarRamo(index) {
-  semestreActual = index;
-  editandoRamo = null;
-  document.getElementById('modalTitulo').textContent = 'Agregar Ramo';
-  document.getElementById('ramoNombre').value = '';
-  document.getElementById('tieneRequisito').value = 'no';
-  document.getElementById('requisitosContainer').style.display = 'none';
-  document.getElementById('listaRequisitos').innerHTML = '';
-  cargarCategoriasSelect();
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function abrirModalEditarRamo(index, ramo) {
-  semestreActual = index;
-  editandoRamo = ramo;
-  document.getElementById('modalTitulo').textContent = 'Editar Ramo';
-  document.getElementById('ramoNombre').value = ramo.nombre;
-  document.getElementById('tieneRequisito').value = ramo.requisitos.length > 0 ? 'si' : 'no';
-  if (ramo.requisitos.length > 0) {
-    document.getElementById('requisitosContainer').style.display = 'block';
-    renderListaRequisitos(ramo.requisitos);
-  } else {
-    document.getElementById('requisitosContainer').style.display = 'none';
-    document.getElementById('listaRequisitos').innerHTML = '';
-  }
-  cargarCategoriasSelect(ramo.categoriaId);
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function cargarCategoriasSelect(seleccionadaId) {
-  const select = document.getElementById('ramoCategoria');
-  select.innerHTML = '';
-  carrera.categorias.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat.id;
-    opt.textContent = cat.nombre;
-    if (cat.id === seleccionadaId) opt.selected = true;
-    select.appendChild(opt);
-  });
-  actualizarColorSelectCategoria();
-  select.onchange = () => {
-    actualizarColorSelectCategoria();
-  };
-}
-
 document.getElementById('tieneRequisito').onchange = () => {
   if (document.getElementById('tieneRequisito').value === 'si') {
     document.getElementById('requisitosContainer').style.display = 'block';
@@ -257,21 +139,6 @@ document.getElementById('tieneRequisito').onchange = () => {
     document.getElementById('listaRequisitos').innerHTML = '';
   }
 };
-
-function renderListaRequisitos(marcados = []) {
-  const lista = document.getElementById('listaRequisitos');
-  lista.innerHTML = '';
-  const todosRamos = carrera.semestres.flatMap(s => s.ramos);
-  if (todosRamos.length === 0) {
-    lista.innerHTML = '<p>No hay ramos aún.</p>';
-    return;
-  }
-  todosRamos.forEach(ramo => {
-    const div = document.createElement('div');
-    div.innerHTML = `<label><input type="checkbox" value="${ramo.id}" ${marcados.includes(ramo.id) ? 'checked' : ''}> ${ramo.nombre}</label>`;
-    lista.appendChild(div);
-  });
-}
 
 document.getElementById('btnGuardarRamo').addEventListener('click', async () => {
   const nombre = document.getElementById('ramoNombre').value.trim();
@@ -312,45 +179,6 @@ document.getElementById('btnGuardarRamo').addEventListener('click', async () => 
   await guardarConfig();
 });
 
-function actualizarDesbloqueos() {
-  const todosRamos = carrera.semestres.flatMap(s => s.ramos);
-  todosRamos.forEach(ramo => {
-    if (ramo.requisitos.length > 0) {
-      const ok = ramo.requisitos.every(id => {
-        const req = todosRamos.find(r => r.id === id);
-        return req && req.completado;
-      });
-      ramo.desbloqueado = ok;
-    } else {
-      ramo.desbloqueado = true;
-    }
-  });
-  actualizarContadorRamos()
-}
-
-function actualizarColorSelectCategoria() {
-  const select = document.getElementById('ramoCategoria');
-  const categoriaId = select.value;
-  const cat = carrera.categorias.find(c => c.id === categoriaId);
-  if (cat) {
-    select.style.backgroundColor = cat.color;
-    select.style.color = esColorClaro(cat.color) ? '#000' : '#fff';
-  } else {
-    select.style.backgroundColor = '#fff';
-    select.style.color = '#000';
-  }
-}
-
-function esColorClaro(hexColor) {
-  const c = hexColor.substring(1);
-  const rgb = parseInt(c, 16);
-  const r = (rgb >> 16) & 0xff;
-  const g = (rgb >> 8) & 0xff;
-  const b = rgb & 0xff;
-  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-  return luminance > 186;
-}
-
 document.getElementById('btnCerrarModal').addEventListener('click', () => {
   document.getElementById('modal').style.display = 'none';
 });
@@ -365,16 +193,66 @@ document.getElementById('btnImportar').addEventListener('click', async () => {
     try {
       const obj = JSON.parse(data);
       if (obj.semestres && obj.categorias) {
-        carrera = obj;
+        carrera.semestres = obj.semestres;
+        carrera.categorias = obj.categorias;
+
+        carrera.estilos = obj.estilos || {
+          fondoTipo: 'color',
+          estiloFondoPagina: '#ffffff',
+          estiloFondoSemestres: '#f1f1f1',
+          estiloTexto: '#000000',
+          estiloBordeColor: '#000000',
+          estiloBotones: '#000000',
+          fondoImagenBase64: null
+        };
+
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('container').style.display = 'flex';
+
         renderCategorias();
         renderMalla();
         await guardarConfig();
       } else {
-        alert('Archivo inválido: estructura incorrecta');
+        alert('Archivo inválido: estructura incorrecta.');
       }
-    } catch {
-      alert('Error al leer el archivo JSON');
+    } catch (error) {
+      console.error(error);
+      alert('Error al leer el archivo JSON.');
     }
+  }
+});
+
+document.getElementById('btnImportarEstilo').addEventListener('click', async () => {
+  const data = await ipcRenderer.invoke('leer-archivo');
+  if (!data) return;
+  try {
+    const estiloImportado = JSON.parse(data);
+    if (!estiloImportado) return;
+
+    carrera.estilos = estiloImportado;
+
+    if (carrera.estilos.fondoTipo === 'imagen' && carrera.estilos.fondoImagenBase64) {
+      document.body.style.backgroundImage = `url('${carrera.estilos.fondoImagenBase64}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundPosition = 'center';
+    } else {
+      document.body.style.backgroundImage = '';
+      document.body.style.backgroundColor = carrera.estilos.estiloFondoPagina || '#ffffff';
+    }
+
+    document.getElementById('fondoTipo').value = carrera.estilos.fondoTipo || 'color';
+    document.getElementById('estiloFondoPagina').value = carrera.estilos.estiloFondoPagina || '#ffffff';
+    document.getElementById('estiloFondoSemestres').value = carrera.estilos.estiloFondoSemestres || '#ffffff';
+    document.getElementById('estiloTexto').value = carrera.estilos.estiloTexto || '#000000';
+    document.getElementById('estiloBordeColor').value = carrera.estilos.estiloBordeColor || '#000000';
+    document.getElementById('estiloBotones').value = carrera.estilos.estiloBotones || '#000000';
+
+    aplicarEstiloDesdeConfig();
+    await guardarConfig();
+
+  } catch (err) {
+    alert('Error al importar el estilo');
   }
 });
 
@@ -393,8 +271,6 @@ document.getElementById('btnToggleSellado').addEventListener('click', () => {
   mallaSellada = !mallaSellada;
   actualizarEstadoMallaSellada();
 });
-
-let dragged = null;
 
 document.addEventListener("dragstart", (e) => {
   if (e.target.classList.contains("ramo")) {
@@ -466,57 +342,6 @@ document.addEventListener("drop", async (e) => {
   await guardarConfig();
 });
 
-function getDragAfterElement(container, y) {
-  const elements = [...container.querySelectorAll(".ramo:not(.dragging)")];
-
-  return elements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-  
-}
-
-function actualizarContadorRamos() {
-  const todosRamos = carrera.semestres.flatMap(s => s.ramos);
-  const aprobados = todosRamos.filter(r => r.completado).length;
-  const total = todosRamos.length;
-  const el = document.getElementById("contadorRamos");
-  if (el) el.textContent = `${aprobados} / ${total} ramos aprobados`;
-}
-
-function ajustarLuminosidad(hex, cantidad) {
-  let c = hex.replace(/^#/, '');
-  if (c.length === 3) {
-    c = c.split('').map(ch => ch + ch).join('');
-  }
-
-  const num = parseInt(c, 16);
-  let r = (num >> 16) + cantidad;
-  let g = ((num >> 8) & 0x00FF) + cantidad;
-  let b = (num & 0x0000FF) + cantidad;
-
-  r = Math.min(255, Math.max(0, r));
-  g = Math.min(255, Math.max(0, g));
-  b = Math.min(255, Math.max(0, b));
-
-  return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
-}
-
-function actualizarEstadoMallaSellada() {
-  const botonesAgregar = document.querySelectorAll("button.agregar");
-  botonesAgregar.forEach(btn => {
-    btn.style.display = mallaSellada ? "none" : "flex";
-  });
-
-  const toggleBtn = document.getElementById("btnToggleSellado");
-  toggleBtn.textContent = mallaSellada ? "Abrir Malla" : "Sellar Malla";
-}
-
 document.getElementById('fondoTipo').addEventListener('change', () => {
   const tipo = document.getElementById('fondoTipo').value;
   const inputImagen = document.getElementById('estiloFondoImagen');
@@ -531,51 +356,85 @@ document.getElementById('fondoTipo').addEventListener('change', () => {
 });
 
 document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
-  const fondo = document.getElementById('estiloFondoPagina').value;
+  const fondoTipo = document.getElementById('fondoTipo').value;
+  const fondoColor = document.getElementById('estiloFondoPagina').value;
   const fondoSemestres = document.getElementById('estiloFondoSemestres').value;
   const textoColor = document.getElementById('estiloTexto').value;
-  const colorBorde = document.getElementById('estiloBordeColor').value;
-  const colorBoton = document.getElementById('estiloBotones').value;
+  const bordeColor = document.getElementById('estiloBordeColor').value;
+  const botonColor = document.getElementById('estiloBotones').value;
+  const inputImagen = document.getElementById('estiloFondoImagen');
 
-  const fondoTipo = document.getElementById('fondoTipo').value;
-  const fondoImagenInput = document.getElementById('estiloFondoImagen');
-
-  // Fondo: color o imagen
-  if (fondoTipo === 'color') {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundColor = fondo;
-  } else if (fondoTipo === 'imagen' && fondoImagenInput.files.length > 0) {
-    const file = fondoImagenInput.files[0];
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      document.body.style.backgroundImage = `url('${e.target.result}')`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundRepeat = 'no-repeat';
-      document.body.style.backgroundPosition = 'center';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // Color de texto general (excluyendo ramos y categorías)
-  document.querySelectorAll('body *:not(.ramo *):not(.categoria *):not(.ramo):not(.categoria)').forEach(el => {
+  document.querySelectorAll('body *:not(.ramo *):not(.categoria *):not(.ramo):not(.categoria):not(#panelEstilos *):not(#panelEstilos)').forEach(el => {
     el.style.color = textoColor;
   });
 
-  // Fondo y borde de semestres
   document.querySelectorAll('.semestre').forEach(s => {
     s.style.backgroundColor = fondoSemestres;
-    s.style.borderColor = colorBorde;
+    s.style.borderColor = bordeColor;
   });
 
-  // Color de botones (excepto los dentro de .ramo o .categoria)
-  document.querySelectorAll('button:not(.ramo button):not(.categoria button)').forEach(btn => {
-    btn.style.backgroundColor = colorBoton;
+  document.querySelectorAll('button:not(.ramo button):not(.categoria button):not(#panelEstilos button)').forEach(btn => {
+    btn.style.backgroundColor = botonColor;
     btn.style.color = '#fff';
   });
-});
 
-const panel = document.getElementById('panelEstilos');
-const btnEstilos = document.getElementById('btnEstilos');
+  if (fondoTipo === 'color') {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundColor = fondoColor;
+
+    carrera.estilos = {
+      fondoTipo,
+      estiloFondoPagina: fondoColor,
+      estiloFondoSemestres: fondoSemestres,
+      estiloTexto: textoColor,
+      estiloBordeColor: bordeColor,
+      estiloBotones: botonColor,
+      fondoImagenBase64: null
+    };
+
+    guardarConfig();
+  } else if (fondoTipo === 'imagen' && inputImagen.files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const base64 = e.target.result;
+
+      document.body.style.backgroundImage = `url('${base64}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundPosition = 'center';
+
+      carrera.estilos = {
+        fondoTipo,
+        estiloFondoPagina: fondoColor,
+        estiloFondoSemestres: fondoSemestres,
+        estiloTexto: textoColor,
+        estiloBordeColor: bordeColor,
+        estiloBotones: botonColor,
+        fondoImagenBase64: base64
+      };
+
+      guardarConfig();
+    };
+    reader.readAsDataURL(inputImagen.files[0]);
+  } else if (fondoTipo === 'imagen' && carrera.estilos.fondoImagenBase64) {
+    document.body.style.backgroundImage = `url('${carrera.estilos.fondoImagenBase64}')`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundPosition = 'center';
+
+    carrera.estilos = {
+      fondoTipo,
+      estiloFondoPagina: fondoColor,
+      estiloFondoSemestres: fondoSemestres,
+      estiloTexto: textoColor,
+      estiloBordeColor: bordeColor,
+      estiloBotones: botonColor,
+      fondoImagenBase64: carrera.estilos.fondoImagenBase64
+    };
+
+    guardarConfig();
+  }
+});
 
 btnEstilos.addEventListener('click', () => {
   panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
@@ -607,18 +466,6 @@ document.getElementById('fondoTipo').addEventListener('change', function () {
   }
 });
 
-let ramoActualNotas = null;
-let divRamoActualNotas = null;
-
-function abrirModalNotas(ramo, divRamo) {
-  ramoActualNotas = ramo;
-  divRamoActualNotas = divRamo;
-  document.getElementById('contenedorNotas').innerHTML = '';
-  document.getElementById('notaMinima').value = ramo.notaMinima || 4.0;
-  document.getElementById('resultadoPonderacion').textContent = '';
-  document.getElementById('modalNotas').style.display = 'flex';
-}
-
 document.getElementById('btnCerrarNotas').addEventListener('click', () => {
   document.getElementById('modalNotas').style.display = 'none';
 });
@@ -643,49 +490,96 @@ document.getElementById('btnAgregarNota').addEventListener('click', () => {
 
 document.getElementById('notaMinima').oninput = calcularPonderacion;
 
-function calcularPonderacion() {
-  const notas = document.querySelectorAll('.nota');
-  const porcentajes = document.querySelectorAll('.porcentaje');
-  let suma = 0;
-  let totalPorcentaje = 0;
+document.getElementById('btnExportarEstilo').addEventListener('click', () => {
+  const estilo = {
+    fondoTipo: document.getElementById('fondoTipo').value,
+    estiloFondoPagina: document.getElementById('estiloFondoPagina').value,
+    estiloFondoSemestres: document.getElementById('estiloFondoSemestres').value,
+    estiloTexto: document.getElementById('estiloTexto').value,
+    estiloBordeColor: document.getElementById('estiloBordeColor').value,
+    estiloBotones: document.getElementById('estiloBotones').value,
+    fondoImagenBase64: carrera.estilos.fondoImagenBase64 || null // <-- AQUI LO INCLUYES
+  };
+  ipcRenderer.invoke('guardar-archivo', JSON.stringify(estilo, null, 2), 'estilos-malla.json');
+});
 
-  for (let i = 0; i < notas.length; i++) {
-    const nota = parseFloat(notas[i].value);
-    const porcentaje = parseFloat(porcentajes[i].value);
-    if (!isNaN(nota) && !isNaN(porcentaje)) {
-      suma += nota * porcentaje;
-      totalPorcentaje += porcentaje;
-    }
+cargarConfig().then(cfg => {
+  if (cfg) {
+    carrera = cfg;
+    renderCategorias();
+    renderMalla();
+    aplicarEstiloDesdeConfig();
+    document.getElementById('controls').style.display = 'none';
+    document.getElementById('container').style.display = 'flex';
   }
+});
 
-  const notaMinima = parseFloat(document.getElementById('notaMinima').value) || 40;
-  let resultado = 0;
+if (!carrera.notas) carrera.notas = [];
 
-  if (totalPorcentaje > 0) {
-    resultado = suma / totalPorcentaje;
+document.getElementById('btnIrANotas').addEventListener('click', () => {
+  document.getElementById('container').style.display = 'none';
+  document.getElementById('notasContainer').style.display = 'block';
+  document.querySelector('.file-actions').style.display = 'none';
+  document.getElementById('btnEstilos').style.display = 'none';
+  document.getElementById('btnIrANotas').style.display = 'none';
+  document.getElementById('contadorRamos').style.display = 'none';
+  document.getElementById('title').style.display = 'none';
+});
+
+document.getElementById('volverMalla').addEventListener('click', () => {
+  document.getElementById('notasContainer').style.display = 'none';
+  document.getElementById('container').style.display = 'flex';
+  document.querySelector('.file-actions').style.display = 'flex';
+  document.getElementById('btnEstilos').style.display = 'block';
+  document.getElementById('btnIrANotas').style.display = 'block';
+  document.getElementById('contadorRamos').style.display = 'flex';
+  document.getElementById('title').style.display = 'flex';
+});
+
+document.getElementById('agregarNota').addEventListener('click', () => {
+  document.getElementById('modalNuevaNota').style.display = 'flex';
+  document.getElementById('notaTitulo').value = '';
+  document.getElementById('notaColor').value = '#f1c40f';
+  document.getElementById('btnGuardarNuevaNota').onclick = guardarNuevaNota;
+});
+
+document.getElementById('btnCerrarModalNuevaNota').addEventListener('click', () => {
+  document.getElementById('modalNuevaNota').style.display = 'none';
+});
+
+document.getElementById('cerrarVistaNota').addEventListener('click', async () => {
+  if (notaAbierta) {
+    notaAbierta.titulo = document.getElementById('vistaNotaTitulo').value.trim();
+    notaAbierta.contenido = document.getElementById('vistaNotaContenido').value;
+    await guardarConfig();
+    renderNotas();
+    notaAbierta = null;
   }
+  document.getElementById('vistaNota').style.display = 'none';
+});
 
-  ramoActualNotas.promedio = resultado;
-  ramoActualNotas.notaMinima = notaMinima;
-
-  const elResultado = document.getElementById('resultadoPonderacion');
-  elResultado.textContent = `Promedio: ${resultado.toFixed(2)} (${resultado >= notaMinima ? 'Aprobado' : 'Reprobado'})`;
-  elResultado.style.color = resultado >= notaMinima ? 'green' : 'red';
-
-  // Mostrarlo visualmente en el ramo
-  const info = divRamoActualNotas.querySelector('.info-promedio');
-  if (!info) {
-    const span = document.createElement('span');
-    span.className = 'info-promedio';
-    span.style.fontSize = '12px';
-    span.style.display = 'block';
-    span.style.marginTop = '3px';
-    divRamoActualNotas.appendChild(span);
+document.getElementById('guardarVistaNota').addEventListener('click', async () => {
+  if (notaAbierta) {
+    notaAbierta.titulo = document.getElementById('vistaNotaTitulo').value.trim();
+    notaAbierta.contenido = document.getElementById('vistaNotaContenido').value;
+    await guardarConfig();
+    renderNotas();
+    notaAbierta = null;
   }
-  divRamoActualNotas.querySelector('.info-promedio').textContent = `Prom: ${resultado.toFixed(2)}`;
-  divRamoActualNotas.querySelector('.info-promedio').style.color = resultado >= notaMinima ? 'green' : 'red';
-}
+  document.getElementById('vistaNota').style.display = 'none';
+});
 
+document.getElementById('btnIrANotas').addEventListener('click', () => {
+  document.getElementById('container').style.display = 'none';
+  document.getElementById('notasContainer').style.display = 'block';
 
+  document.querySelector('.file-actions').style.display = 'none';
+  document.getElementById('btnEstilos').style.display = 'none';
+  document.getElementById('btnIrANotas').style.display = 'none';
+  document.getElementById('contadorRamos').style.display = 'none';
+  document.getElementById('title').style.display = 'none';
+
+  renderNotas();
+});
 
 cargarConfig();

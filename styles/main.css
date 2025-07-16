@@ -1,3 +1,7 @@
+* {
+  outline: none;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
@@ -16,7 +20,8 @@ h1 {
   margin-bottom: 20px;
 }
 
-.controls, .categorias {
+.controls,
+.categorias {
   background: #f2f2f2;
   border: 2px solid #ccc;
   border-radius: 12px;
@@ -24,13 +29,30 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   width: 200px;
   padding: 20px;
   flex-shrink: 0;
 }
 
-input[type="number"], input[type="text"], input[type="color"], select {
+.estilo {
+  background: #f2f2f2;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  width: 200px;
+  padding: 20px;
+  flex-shrink: 0;
+}
+
+input[type="number"],
+input[type="text"],
+input[type="color"],
+select {
   padding: 10px;
   border: 1px solid #999;
   border-radius: 6px;
@@ -39,7 +61,8 @@ input[type="number"], input[type="text"], input[type="color"], select {
   font-size: 16px;
 }
 
-#btnCrearSemestres, #btnAgregarCategoria {
+#btnCrearSemestres,
+#btnAgregarCategoria {
   background: #000;
   color: #fff;
   border: none;
@@ -51,7 +74,8 @@ input[type="number"], input[type="text"], input[type="color"], select {
   transition: background 0.2s;
 }
 
-#btnCrearSemestres:hover, #btnAgregarCategoria:hover {
+#btnCrearSemestres:hover,
+#btnAgregarCategoria:hover {
   background: #333;
 }
 
@@ -76,11 +100,6 @@ input[type="number"], input[type="text"], input[type="color"], select {
   gap: 30px;
 }
 
-.categorias {
-  width: 200px;
-  flex-shrink: 0;
-}
-
 .fila-semestres {
   display: flex;
   flex-wrap: wrap;
@@ -92,9 +111,10 @@ input[type="number"], input[type="text"], input[type="color"], select {
   background: #fafafa;
   border: 2px solid #ddd;
   border-radius: 12px;
-  padding: 12px;
-  width: calc(20% - 20px); /* 5 semestres por fila considerando gap */
+  padding: 20px;
+  width: calc(20% - 20px);
   min-width: 180px;
+  min-height: 140px;
   max-width: 100%;
   box-sizing: border-box;
   flex-grow: 0;
@@ -102,7 +122,9 @@ input[type="number"], input[type="text"], input[type="color"], select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 .semestre-header {
@@ -124,7 +146,7 @@ input[type="number"], input[type="text"], input[type="color"], select {
   width: 100%;
   position: relative;
   color: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
 }
 
@@ -143,15 +165,24 @@ input[type="number"], input[type="text"], input[type="color"], select {
   align-self: flex-end;
 }
 
-.bloqueado {
-  filter: grayscale(100%);
-  opacity: 0.7;
-  cursor: not-allowed;
+.ramo .acciones button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  color: #ffffff;
+  transition: color 0.2s;
+  font-size: 16px;
 }
 
-.completado {
-  text-decoration: line-through;
-  opacity: 0.9;
+.ramo .acciones button:hover {
+  color: #000;
+}
+
+.ramo.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  border: 2px dashed #888;
 }
 
 button.agregar {
@@ -168,18 +199,44 @@ button.agregar {
   align-items: center;
   justify-content: center;
   margin-top: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 button.agregar:hover {
   background: #333;
 }
 
+.bloqueado {
+  filter: grayscale(100%);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.completado {
+  text-decoration: line-through;
+  opacity: 0.9;
+}
+
+.categoria {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+}
+
 .modal {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -194,7 +251,7 @@ button.agregar:hover {
   padding: 30px 35px;
   width: 360px;
   text-align: left;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -230,32 +287,7 @@ button.agregar:hover {
   background: #333;
 }
 
-.categoria {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  font-size: 13px;
-}
-
-.ramo .acciones button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 3px;
-  color: #ffffff;
-  transition: color 0.2s;
-  font-size: 16px;
-}
-
-.ramo .acciones button:hover {
-  color: #000;
-}
-
+.modal .close-btn,
 .btnCerrarModal {
   position: absolute;
   top: 12px;
@@ -266,6 +298,7 @@ button.agregar:hover {
   font-weight: bold;
   cursor: pointer;
   color: #000;
+  z-index: 10;
 }
 
 .file-actions {
@@ -292,34 +325,6 @@ button.agregar:hover {
   background: #333;
 }
 
-.ramo.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-    border: 2px dashed #888;
-}
-
-.semestre {
-  position: relative;
-}
-
-button.agregar {
-  z-index: 2;
-}
-
-.estilo {
-  background: #f2f2f2;
-  border: 2px solid #ccc;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  width: 200px;
-  padding: 20px;
-  flex-shrink: 0;
-}
-
 .estilos-float-btn {
   position: fixed;
   bottom: 20px;
@@ -332,9 +337,10 @@ button.agregar {
   height: 48px;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
 }
+
 .estilos-float-btn:hover {
   background-color: #5a4ecb;
 }
@@ -343,50 +349,66 @@ button.agregar {
   position: fixed;
   bottom: 80px;
   right: 20px;
-  background: #fff;
+  width: 260px;
+  background: #f1f1f1;
   border: 1px solid #ccc;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  width: 240px;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-family: sans-serif;
+  color: #222;
   display: none;
   flex-direction: column;
   gap: 8px;
-  z-index: 999;
+}
+
+.panel-estilos h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  text-align: center;
 }
 
 .panel-estilos label {
-  font-size: 14px;
-  margin-top: 5px;
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
 .panel-estilos input[type="color"],
 .panel-estilos input[type="file"],
 .panel-estilos select {
   width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  box-sizing: border-box;
   margin-bottom: 10px;
+  height: 32px;
+  background: none;
+  cursor: pointer;
 }
 
 .panel-estilos button {
   margin-top: 10px;
 }
 
-.panel-estilos input[type="color"] {
-  padding: 0;
-  height: 32px;
+.panel-estilos .btn-estilo {
+  margin-top: 14px;
+  width: 100%;
+  padding: 8px;
   border: none;
-  background: none;
+  border-radius: 6px;
+  background: #111;
+  color: white;
+  font-weight: bold;
   cursor: pointer;
 }
 
-.modal .close-btn {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: 20px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
+.panel-estilos .btn-estilo:hover {
+  background: #333;
 }
 
 #contenedorNotas {
@@ -400,6 +422,162 @@ button.agregar {
   margin-right: 5px;
 }
 
+#notasContainer {
+  width: 90%;
+  max-width: 900px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notas-header h2 {
+  margin: 0;
+}
+
+#listaNotas {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.nota {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 10px 0;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.nota-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.nota h3 {
+  margin: 0 0 10px 0;
+}
+
+.nota .acciones {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.nota textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+textarea,
+input {
+  user-select: text;
+}
+
+.hoja-nota {
+  background: #fffef0;
+  border: 2px solid #ccc;
+  padding: 20px;
+  width: 500px;
+  max-width: 90%;
+}
+
+.hoja-nota textarea {
+  width: 100%;
+  height: 300px;
+  border: none;
+  border-left: 3px solid #ddd;
+  line-height: 1.6;
+  font-family: 'Courier New', monospace;
+  background: repeating-linear-gradient(to bottom, #fffef0, #fffef0 24px, #ccc 25px);
+  padding: 10px;
+  resize: none;
+}
+
+.hoja-nota input {
+  position: relative;
+  width: 100%;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 18px;
+  border: none;
+  border-bottom: 2px solid #ccc;
+  padding-top: 30px;
+}
+
+.float-btn {
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  z-index: 1000;
+  transition: background 0.2s;
+}
+
+.float-btn:hover {
+  background: #333;
+}
+
+.notas-btn {
+  right: 80px;
+  background: #ffeaa7;
+  color: #333;
+}
+
+.notas-btn:hover {
+  background: #fdcb6e;
+}
+
+#notasFloatingActions {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  z-index: 1000;
+}
+
+#notasFloatingActions button {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  transition: background 0.2s;
+}
+
+#notasFloatingActions button:first-child,
+#notasFloatingActions button:last-child {
+  background: #000;
+  color: #fff;
+}
+
+#notasFloatingActions button:hover {
+  background-color: #333;
+}
 
 @media (max-width: 1000px) {
   .semestre {

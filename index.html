@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mi Malla</title>
   <link rel="stylesheet" href="styles/main.css">
   <script src="https://kit.fontawesome.com/82bef47541.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
-  <h1>MiMalla</h1>
+  <h1 id="title">MiMalla</h1>
   <h2 id="contadorRamos" style="margin-top: -15px; font-size: 18px; color: #444;">0 / 0 ramos aprobados</h2>
 
   <div class="controls" id="controls">
@@ -42,80 +44,115 @@
     <div class="modal-content">
       <button id="btnCerrarModal">×</button>
       <h3 id="modalTitulo">Agregar Ramo</h3>
-
       <label for="ramoNombre">Nombre del ramo:</label>
       <input type="text" id="ramoNombre">
-
       <label>¿Tiene requisito?</label>
       <select id="tieneRequisito">
         <option value="no">No</option>
         <option value="si">Sí</option>
       </select>
-
       <div id="requisitosContainer" style="display:none;">
         <label>Selecciona requisito(s):</label>
         <div id="listaRequisitos"></div>
       </div>
-
       <label for="ramoCategoria">Categoría:</label>
       <select id="ramoCategoria"></select>
-
       <button id="btnGuardarRamo">Listo</button>
     </div>
   </div>
 
-  <button id="btnEstilos" class="estilos-float-btn">
+  <button id="btnIrANotas" class="float-btn notas-btn">
+    <i class="fa-solid fa-note-sticky"></i>
+  </button>
+
+  <button id="btnEstilos" class="float-btn">
     <i class="fa-solid fa-palette"></i>
   </button>
 
-  <div id="panelEstilos" class="panel-estilos">
-    <h3>Estilo de la App</h3>
+  <div id="panelEstilos" class="panel-estilos" style="display: none;">
+    <button id="btnExportarEstilo" class="btn-estilo">Exportar Estilo</button>
+    <button id="btnImportarEstilo" class="btn-estilo">Importar Estilo</button>
 
-    <label for="fondoTipo">Tipo de fondo:</label>
+    <h3>Personalizar MiMalla</h3>
+
+    <label id="labelFondoTipo">Tipo de fondo:</label>
     <select id="fondoTipo">
       <option value="color">Color</option>
       <option value="imagen">Imagen</option>
     </select>
 
-    <label for="estiloFondoPagina">Color de fondo:</label>
+    <label id="labelFondoColor">Fondo de la página:</label>
     <input type="color" id="estiloFondoPagina" />
 
-    <label for="estiloFondoImagen" style="display:none;">Imagen de fondo:</label>
+    <label id="labelFondoImagen" style="display: none;">Selecciona una imagen:</label>
     <input type="file" id="estiloFondoImagen" accept="image/*" style="display: none;" />
 
-    <label for="estiloFondoSemestres">Fondo de los semestres:</label>
+    <label>Fondo de los semestres:</label>
     <input type="color" id="estiloFondoSemestres" />
 
-    <label for="estiloTexto">Color de texto:</label>
+    <label>Color de texto general:</label>
     <input type="color" id="estiloTexto" />
 
-    <label for="estiloBordeColor">Color borde semestres:</label>
+    <label>Color de borde de semestres:</label>
     <input type="color" id="estiloBordeColor" />
 
-    <label for="estiloBotones">Color botones:</label>
+    <label>Color de botones:</label>
     <input type="color" id="estiloBotones" />
 
-    <button id="btnAplicarEstilo">Aplicar Estilo</button>
+    <button id="btnAplicarEstilo" class="btn-estilo">Aplicar Estilo</button>
   </div>
 
   <div id="modalNotas" class="modal" style="display: none;">
     <div class="modal-content">
       <button id="btnCerrarNotas" class="close-btn">×</button>
       <h3>Calculadora de Ponderación</h3>
-
       <div id="contenedorNotas"></div>
-
       <button id="btnAgregarNota">Agregar Nota</button>
-
       <label for="notaMinima">Nota mínima para aprobar:</label>
       <input type="number" id="notaMinima" value="40.0" step="0.1" min="1" max="7">
-
       <h4 id="resultadoPonderacion"></h4>
     </div>
   </div>
 
+  <div id="notasContainer" style="display: none;">
+    <div id="notasFloatingActions">
+      <button id="volverMalla" title="Volver a la malla">
+        <i class="fa-solid fa-table"></i>
+      </button>
+      <button id="agregarNota" title="Agregar nota">
+        <i class="fa-solid fa-square-plus"></i>
+      </button>
+    </div>
+    <h2>Mis Notas</h2>
+    <div id="listaNotas"></div>
+  </div>
+
+  <div id="modalNuevaNota" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button id="btnCerrarModalNuevaNota" class="close-btn">×</button>
+      <h3>Nueva Nota</h3>
+
+      <label>Título:</label>
+      <input type="text" id="notaTitulo" placeholder="Título de la nota">
+
+      <label>Color:</label>
+      <input type="color" id="notaColor" value="#f1c40f">
+
+      <button id="btnGuardarNuevaNota">Guardar Nota</button>
+    </div>
+  </div>
+
+  <div id="vistaNota" class="modal" style="display:none;">
+    <div class="modal-content hoja-nota">
+      <button id="cerrarVistaNota" class="btnCerrarModal">×</button>
+      <input type="text" id="vistaNotaTitulo" placeholder="Título de la nota" />
+      <textarea id="vistaNotaContenido" placeholder="Escribe tu nota aquí..."></textarea>
+      <button id="guardarVistaNota">Guardar cambios</button>
+    </div>
+  </div>
 
   <script src="renderer.js"></script>
   <script src="draganddrop.js"></script>
 </body>
+
 </html>
