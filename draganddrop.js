@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const addButton = sem.querySelector("button.agregar");
 
         if (afterElement == null) {
-          // insertar antes del botón agregar, si existe
           if (addButton) {
             sem.insertBefore(dragged, addButton);
           } else {
