@@ -320,6 +320,87 @@ button.agregar {
   flex-shrink: 0;
 }
 
+.estilos-float-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+.estilos-float-btn:hover {
+  background-color: #5a4ecb;
+}
+
+.panel-estilos {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 240px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 999;
+}
+
+.panel-estilos label {
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.panel-estilos input[type="color"],
+.panel-estilos input[type="file"],
+.panel-estilos select {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.panel-estilos button {
+  margin-top: 10px;
+}
+
+.panel-estilos input[type="color"] {
+  padding: 0;
+  height: 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.modal .close-btn {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+#contenedorNotas {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+#contenedorNotas input {
+  margin-right: 5px;
+}
+
+
 @media (max-width: 1000px) {
   .semestre {
     width: calc(33.33% - 20px);

@@ -11,7 +11,6 @@
   <h1>MiMalla</h1>
   <h2 id="contadorRamos" style="margin-top: -15px; font-size: 18px; color: #444;">0 / 0 ramos aprobados</h2>
 
-
   <div class="controls" id="controls">
     <label for="numSemestres">¿Cuántos semestres tiene la carrera?</label>
     <input type="number" id="numSemestres" min="1" placeholder="Ej: 10" />
@@ -28,23 +27,22 @@
       <label for="categoriaColor">Color:</label>
       <input type="color" id="categoriaColor" value="#6c5ce7">
       <button id="btnAgregarCategoria">Agregar Categoría</button>
-
       <div id="categorias"></div>
     </div>
 
-      <div class="file-actions">
-        <button id="btnExportar">Exportar</button>
-        <button id="btnImportar">Importar</button>
-        <button id="btnNuevaMalla">Crear Malla Nueva</button>
-        <button id="btnToggleSellado">Sellar Malla</button>
-      </div>
+    <div class="file-actions">
+      <button id="btnExportar">Exportar</button>
+      <button id="btnImportar">Importar</button>
+      <button id="btnNuevaMalla">Crear Malla Nueva</button>
+      <button id="btnToggleSellado">Sellar Malla</button>
+    </div>
   </div>
 
   <div id="modal" class="modal" style="display: none;">
     <div class="modal-content">
-        <button id="btnCerrarModal" style=>×</button>
-
+      <button id="btnCerrarModal">×</button>
       <h3 id="modalTitulo">Agregar Ramo</h3>
+
       <label for="ramoNombre">Nombre del ramo:</label>
       <input type="text" id="ramoNombre">
 
@@ -66,26 +64,58 @@
     </div>
   </div>
 
-  <div class="estilo">
-  <h3>Estilo</h3>
-  <label>Fondo de la página:</label>
-  <input type="color" id="estiloFondoPagina" />
-  
-  <label>Fondo de los semestres:</label>
-  <input type="color" id="estiloFondoSemestres" />
+  <!-- Botón flotante para abrir el panel de estilos -->
+  <button id="btnEstilos" class="estilos-float-btn">
+    <i class="fa-solid fa-palette"></i>
+  </button>
 
-  <label>Color de texto:</label>
-  <input type="color" id="estiloTexto" />
+  <!-- Panel lateral de estilos -->
+  <div id="panelEstilos" class="panel-estilos">
+    <h3>Estilo de la App</h3>
 
-  <label>Color borde semestres:</label>
-  <input type="color" id="estiloBordeColor" />
+    <label for="fondoTipo">Tipo de fondo:</label>
+    <select id="fondoTipo">
+      <option value="color">Color</option>
+      <option value="imagen">Imagen</option>
+    </select>
 
+    <label for="estiloFondoPagina">Color de fondo:</label>
+    <input type="color" id="estiloFondoPagina" />
 
-  <label>Color botones:</label>
-  <input type="color" id="estiloBotones" />
+    <label for="estiloFondoImagen" style="display:none;">Imagen de fondo:</label>
+    <input type="file" id="estiloFondoImagen" accept="image/*" style="display: none;" />
 
-  <button id="btnAplicarEstilo">Aplicar Estilo</button>
-</div>
+    <label for="estiloFondoSemestres">Fondo de los semestres:</label>
+    <input type="color" id="estiloFondoSemestres" />
+
+    <label for="estiloTexto">Color de texto:</label>
+    <input type="color" id="estiloTexto" />
+
+    <label for="estiloBordeColor">Color borde semestres:</label>
+    <input type="color" id="estiloBordeColor" />
+
+    <label for="estiloBotones">Color botones:</label>
+    <input type="color" id="estiloBotones" />
+
+    <button id="btnAplicarEstilo">Aplicar Estilo</button>
+  </div>
+
+  <div id="modalNotas" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button id="btnCerrarNotas" class="close-btn">×</button>
+      <h3>Calculadora de Ponderación</h3>
+
+      <div id="contenedorNotas"></div>
+
+      <button id="btnAgregarNota">Agregar Nota</button>
+
+      <label for="notaMinima">Nota mínima para aprobar:</label>
+      <input type="number" id="notaMinima" value="40.0" step="0.1" min="1" max="7">
+
+      <h4 id="resultadoPonderacion"></h4>
+    </div>
+  </div>
+
 
   <script src="renderer.js"></script>
   <script src="draganddrop.js"></script>

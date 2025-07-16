@@ -24,9 +24,12 @@ async function cargarConfig() {
         renderCategorias();
         renderMalla();
       }
-    } catch {}
+    } catch (error) {
+      console.error("Error al parsear la configuración:", error);
+    }
   }
 }
+
 
 document.getElementById('btnCrearSemestres').addEventListener('click', async () => {
   const num = parseInt(document.getElementById('numSemestres').value);
@@ -57,46 +60,38 @@ document.getElementById('btnAgregarCategoria').addEventListener('click', async (
 
 function renderCategorias() {
   const cont = document.getElementById('categorias');
-    cont.innerHTML = '';
-    carrera.categorias.forEach(cat => {
+  cont.innerHTML = '';
+  carrera.categorias.forEach(cat => {
     const div = document.createElement('div');
     div.className = 'categoria';
     div.style.background = cat.color;
+
     const spanNombre = document.createElement('span');
     spanNombre.textContent = cat.nombre;
     spanNombre.style.flex = '1';
 
-const btnEditar = document.createElement('button');
-btnEditar.style.background = 'transparent';
-btnEditar.style.border = 'none';
-btnEditar.style.cursor = 'pointer';
-btnEditar.style.color = '#fff';
-btnEditar.onclick = () => editarCategoria(cat.id);
+    const btnEliminar = document.createElement('button');
+    btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnEliminar.style.background = 'transparent';
+    btnEliminar.style.border = 'none';
+    btnEliminar.style.cursor = 'pointer';
+    btnEliminar.style.color = '#fff';
+    btnEliminar.onclick = async () => {
+      if (confirm('¿Eliminar esta categoría?')) {
+        carrera.categorias = carrera.categorias.filter(c => c.id !== cat.id);
+        carrera.semestres.forEach(s => {
+          s.ramos.forEach(r => {
+            if (r.categoriaId === cat.id) r.categoriaId = null;
+          });
+        });
+        renderCategorias();
+        renderMalla();
+        await guardarConfig();
+      }
+    };
 
-const btnEliminar = document.createElement('button');
-btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
-btnEliminar.style.background = 'transparent';
-btnEliminar.style.border = 'none';
-btnEliminar.style.cursor = 'pointer';
-btnEliminar.style.color = '#fff';
-btnEliminar.onclick = async () => {
-  if (confirm('¿Eliminar esta categoría?')) {
-    carrera.categorias = carrera.categorias.filter(c => c.id !== cat.id);
-    carrera.semestres.forEach(s => {
-      s.ramos.forEach(r => {
-        if (r.categoriaId === cat.id) r.categoriaId = null;
-      });
-    });
-    renderCategorias();
-    renderMalla();
-    await guardarConfig();
-  }
-};
-
-div.appendChild(spanNombre);
-div.appendChild(btnEditar);
-div.appendChild(btnEliminar);
-
+    div.appendChild(spanNombre);
+    div.appendChild(btnEliminar);
     cont.appendChild(div);
   });
 }
@@ -131,10 +126,24 @@ function renderMalla() {
         divRamo.style.background = baseColor;
         if (!ramo.desbloqueado) divRamo.classList.add('bloqueado');
         if (ramo.completado) divRamo.classList.add('completado');
+
+        divRamo.innerHTML = '';
+
         const nombre = document.createElement('span');
         nombre.textContent = ramo.nombre;
-        divRamo.innerHTML = '';
         divRamo.appendChild(nombre);
+
+        // Mostrar promedio si existe
+        if (ramo.promedio !== undefined) {
+          const spanProm = document.createElement('span');
+          spanProm.className = 'info-promedio';
+          spanProm.textContent = `Prom: ${ramo.promedio.toFixed(2)}`;
+          spanProm.style.display = 'block';
+          spanProm.style.fontSize = '12px';
+          spanProm.style.color = ramo.promedio >= (ramo.notaMinima || 4.0) ? 'green' : 'red';
+          divRamo.appendChild(spanProm);
+        }
+
         divRamo.onclick = async () => {
           if (!ramo.desbloqueado) return;
           ramo.completado = !ramo.completado;
@@ -142,14 +151,17 @@ function renderMalla() {
           renderMalla();
           await guardarConfig();
         };
+
         const acciones = document.createElement('div');
         acciones.className = 'acciones';
+
         const btnEditar = document.createElement('button');
         btnEditar.innerHTML = `<i class="fa-solid fa-pen-to-square"></i>`;
         btnEditar.onclick = e => {
           e.stopPropagation();
           abrirModalEditarRamo(indexGlobal, ramo);
         };
+
         const btnEliminar = document.createElement('button');
         btnEliminar.innerHTML = `<i class="fa-solid fa-trash"></i>`;
         btnEliminar.onclick = async e => {
@@ -160,11 +172,23 @@ function renderMalla() {
             await guardarConfig();
           }
         };
+
+        const btnNotas = document.createElement('button');
+        btnNotas.innerHTML = `<i class="fa-solid fa-calculator"></i>`;
+        btnNotas.title = 'Calcular ponderación';
+        btnNotas.onclick = e => {
+          e.stopPropagation();
+          abrirModalNotas(ramo, divRamo);
+        };
+
         acciones.appendChild(btnEditar);
         acciones.appendChild(btnEliminar);
+        acciones.appendChild(btnNotas);
         divRamo.appendChild(acciones);
+
         divSemestre.appendChild(divRamo);
       });
+
       const btnAddRamo = document.createElement('button');
       btnAddRamo.textContent = '+';
       btnAddRamo.className = 'agregar';
@@ -174,7 +198,8 @@ function renderMalla() {
     });
     container.appendChild(filaDiv);
   });
-  actualizarContadorRamos()
+
+  actualizarContadorRamos();
   actualizarEstadoMallaSellada();
 }
 
@@ -492,6 +517,19 @@ function actualizarEstadoMallaSellada() {
   toggleBtn.textContent = mallaSellada ? "Abrir Malla" : "Sellar Malla";
 }
 
+document.getElementById('fondoTipo').addEventListener('change', () => {
+  const tipo = document.getElementById('fondoTipo').value;
+  const inputImagen = document.getElementById('estiloFondoImagen');
+  const inputColor = document.getElementById('estiloFondoPagina');
+  if (tipo === 'imagen') {
+    inputImagen.style.display = 'block';
+    inputColor.style.display = 'none';
+  } else {
+    inputImagen.style.display = 'none';
+    inputColor.style.display = 'inline-block';
+  }
+});
+
 document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
   const fondo = document.getElementById('estiloFondoPagina').value;
   const fondoSemestres = document.getElementById('estiloFondoSemestres').value;
@@ -499,30 +537,155 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
   const colorBorde = document.getElementById('estiloBordeColor').value;
   const colorBoton = document.getElementById('estiloBotones').value;
 
-  document.body.style.backgroundColor = fondo;
-  document.body.style.color = textoColor;
+  const fondoTipo = document.getElementById('fondoTipo').value;
+  const fondoImagenInput = document.getElementById('estiloFondoImagen');
 
+  // Fondo: color o imagen
+  if (fondoTipo === 'color') {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundColor = fondo;
+  } else if (fondoTipo === 'imagen' && fondoImagenInput.files.length > 0) {
+    const file = fondoImagenInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      document.body.style.backgroundImage = `url('${e.target.result}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundPosition = 'center';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Color de texto general (excluyendo ramos y categorías)
+  document.querySelectorAll('body *:not(.ramo *):not(.categoria *):not(.ramo):not(.categoria)').forEach(el => {
+    el.style.color = textoColor;
+  });
+
+  // Fondo y borde de semestres
   document.querySelectorAll('.semestre').forEach(s => {
     s.style.backgroundColor = fondoSemestres;
     s.style.borderColor = colorBorde;
   });
 
-  document.querySelectorAll('.ramo span').forEach(span => {
-    span.style.color = textoColor;
-  });
-
-  document.querySelectorAll('.semestre-header').forEach(header => {
-    header.style.color = textoColor;
-  });
-
-  document.querySelectorAll('.categoria').forEach(cat => {
-    cat.style.color = textoColor;
-  });
-
-  document.querySelectorAll('button').forEach(btn => {
+  // Color de botones (excepto los dentro de .ramo o .categoria)
+  document.querySelectorAll('button:not(.ramo button):not(.categoria button)').forEach(btn => {
     btn.style.backgroundColor = colorBoton;
     btn.style.color = '#fff';
   });
 });
+
+const panel = document.getElementById('panelEstilos');
+const btnEstilos = document.getElementById('btnEstilos');
+
+btnEstilos.addEventListener('click', () => {
+  panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+});
+
+document.getElementById('fondoTipo').addEventListener('change', () => {
+  const tipo = document.getElementById('fondoTipo').value;
+  document.getElementById('estiloFondoImagen').style.display = tipo === 'imagen' ? 'block' : 'none';
+  document.getElementById('estiloFondoPagina').style.display = tipo === 'imagen' ? 'none' : 'inline-block';
+});
+
+document.getElementById('fondoTipo').addEventListener('change', function () {
+  const tipo = this.value;
+  const colorInput = document.getElementById('estiloFondoPagina');
+  const colorLabel = document.getElementById('labelFondoColor');
+  const fileInput = document.getElementById('estiloFondoImagen');
+  const fileLabel = document.getElementById('labelFondoImagen');
+
+  if (tipo === 'color') {
+    colorInput.style.display = 'block';
+    colorLabel.style.display = 'block';
+    fileInput.style.display = 'none';
+    fileLabel.style.display = 'none';
+  } else {
+    colorInput.style.display = 'none';
+    colorLabel.style.display = 'none';
+    fileInput.style.display = 'block';
+    fileLabel.style.display = 'block';
+  }
+});
+
+let ramoActualNotas = null;
+let divRamoActualNotas = null;
+
+function abrirModalNotas(ramo, divRamo) {
+  ramoActualNotas = ramo;
+  divRamoActualNotas = divRamo;
+  document.getElementById('contenedorNotas').innerHTML = '';
+  document.getElementById('notaMinima').value = ramo.notaMinima || 4.0;
+  document.getElementById('resultadoPonderacion').textContent = '';
+  document.getElementById('modalNotas').style.display = 'flex';
+}
+
+document.getElementById('btnCerrarNotas').addEventListener('click', () => {
+  document.getElementById('modalNotas').style.display = 'none';
+});
+
+document.getElementById('btnAgregarNota').addEventListener('click', () => {
+  const fila = document.createElement('div');
+  fila.innerHTML = `
+    <input type="number" placeholder="Nota" step="0.1" min="1" max="7" class="nota" />
+    <input type="number" placeholder="%" step="1" min="0" max="100" class="porcentaje" />
+    <button class="btnEliminarNota">🗑</button>
+  `;
+  document.getElementById('contenedorNotas').appendChild(fila);
+
+  fila.querySelector('.btnEliminarNota').onclick = () => {
+    fila.remove();
+    calcularPonderacion();
+  };
+
+  fila.querySelector('.nota').oninput = calcularPonderacion;
+  fila.querySelector('.porcentaje').oninput = calcularPonderacion;
+});
+
+document.getElementById('notaMinima').oninput = calcularPonderacion;
+
+function calcularPonderacion() {
+  const notas = document.querySelectorAll('.nota');
+  const porcentajes = document.querySelectorAll('.porcentaje');
+  let suma = 0;
+  let totalPorcentaje = 0;
+
+  for (let i = 0; i < notas.length; i++) {
+    const nota = parseFloat(notas[i].value);
+    const porcentaje = parseFloat(porcentajes[i].value);
+    if (!isNaN(nota) && !isNaN(porcentaje)) {
+      suma += nota * porcentaje;
+      totalPorcentaje += porcentaje;
+    }
+  }
+
+  const notaMinima = parseFloat(document.getElementById('notaMinima').value) || 40;
+  let resultado = 0;
+
+  if (totalPorcentaje > 0) {
+    resultado = suma / totalPorcentaje;
+  }
+
+  ramoActualNotas.promedio = resultado;
+  ramoActualNotas.notaMinima = notaMinima;
+
+  const elResultado = document.getElementById('resultadoPonderacion');
+  elResultado.textContent = `Promedio: ${resultado.toFixed(2)} (${resultado >= notaMinima ? 'Aprobado' : 'Reprobado'})`;
+  elResultado.style.color = resultado >= notaMinima ? 'green' : 'red';
+
+  // Mostrarlo visualmente en el ramo
+  const info = divRamoActualNotas.querySelector('.info-promedio');
+  if (!info) {
+    const span = document.createElement('span');
+    span.className = 'info-promedio';
+    span.style.fontSize = '12px';
+    span.style.display = 'block';
+    span.style.marginTop = '3px';
+    divRamoActualNotas.appendChild(span);
+  }
+  divRamoActualNotas.querySelector('.info-promedio').textContent = `Prom: ${resultado.toFixed(2)}`;
+  divRamoActualNotas.querySelector('.info-promedio').style.color = resultado >= notaMinima ? 'green' : 'red';
+}
+
+
 
 cargarConfig();
