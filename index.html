@@ -90,14 +90,23 @@
     <label>Fondo de los semestres:</label>
     <input type="color" id="estiloFondoSemestres" />
 
-    <label>Color de texto general:</label>
-    <input type="color" id="estiloTexto" />
-
     <label>Color de borde de semestres:</label>
     <input type="color" id="estiloBordeColor" />
 
+    <label>Color de texto general:</label>
+    <input type="color" id="estiloTexto" />
+
+    <label for="fondoCalendario">Fondo Calendario</label>
+    <input type="color" id="fondoCalendario">
+
+    <label for="colorRecordatorio">Color Recordatorio</label>
+    <input type="color" id="colorRecordatorio">
+
     <label>Color de botones:</label>
     <input type="color" id="estiloBotones" />
+
+    <label for="colorCategoria">Color Categoría</label>
+    <input type="color" id="colorCategoria">
 
     <button id="btnAplicarEstilo" class="btn-estilo">Aplicar Estilo</button>
   </div>
@@ -116,10 +125,10 @@
 
   <div id="notasContainer" style="display: none;">
     <div id="notasFloatingActions">
-      <button id="volverMalla" title="Volver a la malla">
+      <button id="volverMalla" class="no-afectar-color" title="Volver a la malla">
         <i class="fa-solid fa-table"></i>
       </button>
-      <button id="agregarNota" title="Agregar nota">
+      <button id="agregarNota" class="no-afectar-color" title="Agregar nota">
         <i class="fa-solid fa-square-plus"></i>
       </button>
     </div>
@@ -150,6 +159,40 @@
       <button id="guardarVistaNota">Guardar cambios</button>
     </div>
   </div>
+
+  <button id="btnIrACalendario" class="float-btn calendario-btn">
+    <i class="fa-solid fa-calendar-days"></i>
+  </button>
+
+  <div id="calendarioContainer" style="display: none;">
+    <div class="calendario-header">
+      <h2 id="mesAnio"></h2>
+      <div>
+        <button id="mesAnterior"><i class="fa-solid fa-left-long no-afectar-color"></i></button>
+        <button id="mesSiguiente"><i class="fa-solid fa-right-long no-afectar-color"></i></button>
+      </div>
+    </div>
+    <div class="dias-semana">
+      <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+    </div>
+    <div id="diasCalendario" class="dias-calendario"></div>
+  </div>
+
+  <div id="modalRecordatorio" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button id="cerrarModalRecordatorio" class="close-btn">×</button>
+      <h3>Agregar Recordatorio</h3>
+      <div id="inputsRecordatorio">
+        <input type="text" placeholder="Título del recordatorio" class="input-recordatorio">
+      </div>
+      <button id="agregarInputRecordatorio">+ Agregar otro</button>
+      <button id="guardarRecordatorio">Guardar</button>
+    </div>
+  </div>
+
+  <button id="volverMallaDesdeCalendario" class="float-btn volver-malla-btn no-afectar-color" style="display: none;">
+    <i class="fa-solid fa-table"></i>
+  </button>
 
   <script src="renderer.js"></script>
   <script src="draganddrop.js"></script>

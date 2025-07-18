@@ -19,6 +19,9 @@ const { abrirModalNotas } = require('./module/abrirModalNotas');
 const { getDragAfterElement } = require('./module/getDragAfterElement');
 const { calcularPonderacion } = require('./module/calcularPonderacion');
 const { guardarNuevaNota } = require('./module/guardarNuevaNota');
+const { renderizarCalendario } = require('./module/renderizarCalendario');
+const { abrirModalRecordatorio } = require('./module/abrirModalRecordatorio');
+const { renderCategorias } = require('./module/renderCategorias');
 
 let carrera = {
   semestres: [],
@@ -34,8 +37,6 @@ let carrera = {
   }
 };
 
-
-
 let mallaSellada = false;
 let semestreActual = 0;
 let editandoRamo = null;
@@ -43,6 +44,10 @@ let notaAbierta = null;
 let ramoActualNotas = null;
 let divRamoActualNotas = null;
 let dragged = null;
+let recordatorios = JSON.parse(localStorage.getItem('recordatorios')) || {};
+let mesActual = new Date().getMonth();
+let anioActual = new Date().getFullYear();
+let diaSeleccionado = null;
 
 const panel = document.getElementById('panelEstilos');
 const btnEstilos = document.getElementById('btnEstilos');
@@ -91,44 +96,6 @@ document.getElementById('btnAgregarCategoria').addEventListener('click', async (
   renderCategorias();
   await guardarConfig();
 });
-
-function renderCategorias() {
-  const cont = document.getElementById('categorias');
-  cont.innerHTML = '';
-  carrera.categorias.forEach(cat => {
-    const div = document.createElement('div');
-    div.className = 'categoria';
-    div.style.background = cat.color;
-
-    const spanNombre = document.createElement('span');
-    spanNombre.textContent = cat.nombre;
-    spanNombre.style.flex = '1';
-
-    const btnEliminar = document.createElement('button');
-    btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
-    btnEliminar.style.background = 'transparent';
-    btnEliminar.style.border = 'none';
-    btnEliminar.style.cursor = 'pointer';
-    btnEliminar.style.color = '#fff';
-    btnEliminar.onclick = async () => {
-      if (confirm('¿Eliminar esta categoría?')) {
-        carrera.categorias = carrera.categorias.filter(c => c.id !== cat.id);
-        carrera.semestres.forEach(s => {
-          s.ramos.forEach(r => {
-            if (r.categoriaId === cat.id) r.categoriaId = null;
-          });
-        });
-        renderCategorias();
-        renderMalla();
-        await guardarConfig();
-      }
-    };
-
-    div.appendChild(spanNombre);
-    div.appendChild(btnEliminar);
-    cont.appendChild(div);
-  });
-}
 
 document.getElementById('tieneRequisito').onchange = () => {
   if (document.getElementById('tieneRequisito').value === 'si') {
@@ -364,8 +331,30 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
   const botonColor = document.getElementById('estiloBotones').value;
   const inputImagen = document.getElementById('estiloFondoImagen');
 
-  document.querySelectorAll('body *:not(.ramo *):not(.categoria *):not(.ramo):not(.categoria):not(#panelEstilos *):not(#panelEstilos)').forEach(el => {
-    el.style.color = textoColor;
+  document.querySelectorAll('body *').forEach(el => {
+    const estaEnBotonFlotante =
+      el.closest('#btnIrANotas') ||
+      el.closest('#btnEstilos') ||
+      el.closest('#btnIrACalendario');
+
+    const estaEnRamoCategoriaEstilos =
+      el.closest('.ramo') ||
+      el.closest('.categoria') ||
+      el.closest('#panelEstilos');
+
+    if (!estaEnBotonFlotante && !estaEnRamoCategoriaEstilos) {
+      el.style.color = textoColor;
+    }
+  });
+
+  const botonesFlotantes = ['btnIrANotas', 'btnEstilos', 'btnIrACalendario'];
+
+  botonesFlotantes.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.style.backgroundColor = botonColor;
+      btn.style.color = '#fff'; // SIEMPRE blanco
+    }
   });
 
   document.querySelectorAll('.semestre').forEach(s => {
@@ -377,6 +366,17 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
     btn.style.backgroundColor = botonColor;
     btn.style.color = '#fff';
   });
+  document.getElementById('categoriaColor').addEventListener('input', (e) => {
+    const nuevoColor = e.target.value;
+    document.getElementById('categoria-color').style.backgroundColor = nuevoColor;
+  });
+
+  document.getElementById('fondoCalendario').addEventListener('input', (e) => {
+    const color = e.target.value;
+    document.getElementById('calendarioContainer').style.backgroundColor = color;
+  });
+
+  colorRecordatorioActual = document.getElementById('colorRecordatorio').value;
 
   if (fondoTipo === 'color') {
     document.body.style.backgroundImage = '';
@@ -434,6 +434,14 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
 
     guardarConfig();
   }
+});
+
+document.getElementById('categoriaColor').addEventListener('input', async (e) => {
+  const nuevoColor = e.target.value;
+  carrera.estilos.colorCategoria = nuevoColor;
+  const contCategoria = document.getElementById('categoria-color');
+  if (contCategoria) contCategoria.style.backgroundColor = nuevoColor;
+  await guardarConfig();
 });
 
 btnEstilos.addEventListener('click', () => {
@@ -498,7 +506,7 @@ document.getElementById('btnExportarEstilo').addEventListener('click', () => {
     estiloTexto: document.getElementById('estiloTexto').value,
     estiloBordeColor: document.getElementById('estiloBordeColor').value,
     estiloBotones: document.getElementById('estiloBotones').value,
-    fondoImagenBase64: carrera.estilos.fondoImagenBase64 || null // <-- AQUI LO INCLUYES
+    fondoImagenBase64: carrera.estilos.fondoImagenBase64 || null
   };
   ipcRenderer.invoke('guardar-archivo', JSON.stringify(estilo, null, 2), 'estilos-malla.json');
 });
@@ -524,6 +532,7 @@ document.getElementById('btnIrANotas').addEventListener('click', () => {
   document.getElementById('btnIrANotas').style.display = 'none';
   document.getElementById('contadorRamos').style.display = 'none';
   document.getElementById('title').style.display = 'none';
+  document.getElementById('btnIrACalendario').style.display = 'none';
 });
 
 document.getElementById('volverMalla').addEventListener('click', () => {
@@ -534,6 +543,7 @@ document.getElementById('volverMalla').addEventListener('click', () => {
   document.getElementById('btnIrANotas').style.display = 'block';
   document.getElementById('contadorRamos').style.display = 'flex';
   document.getElementById('title').style.display = 'flex';
+  document.getElementById('btnIrACalendario').style.display = 'flex';
 });
 
 document.getElementById('agregarNota').addEventListener('click', () => {
@@ -582,4 +592,81 @@ document.getElementById('btnIrANotas').addEventListener('click', () => {
   renderNotas();
 });
 
-cargarConfig();
+document.getElementById('agregarInputRecordatorio').onclick = () => {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'input-recordatorio';
+  document.getElementById('inputsRecordatorio').appendChild(input);
+};
+
+document.getElementById('guardarRecordatorio').onclick = () => {
+  const inputs = document.querySelectorAll('.input-recordatorio');
+  const textos = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+
+  if (textos.length) {
+    recordatorios[diaSeleccionado] = textos;
+  } else {
+    delete recordatorios[diaSeleccionado];
+  }
+
+  localStorage.setItem('recordatorios', JSON.stringify(recordatorios));
+  document.getElementById('modalRecordatorio').style.display = 'none';
+  renderizarCalendario();
+};
+
+document.getElementById('cerrarModalRecordatorio').onclick = () => {
+  document.getElementById('modalRecordatorio').style.display = 'none';
+};
+
+document.getElementById('mesAnterior').onclick = () => {
+  mesActual--;
+  if (mesActual < 0) {
+    mesActual = 11;
+    anioActual--;
+  }
+  renderizarCalendario();
+};
+
+document.getElementById('mesSiguiente').onclick = () => {
+  mesActual++;
+  if (mesActual > 11) {
+    mesActual = 0;
+    anioActual++;
+  }
+  renderizarCalendario();
+};
+
+document.getElementById('btnIrACalendario').addEventListener('click', () => {
+  document.getElementById('container').style.display = 'none';
+  document.getElementById('notasContainer').style.display = 'none';
+  document.getElementById('calendarioContainer').style.display = 'block';
+  document.querySelector('.file-actions').style.display = 'none';
+  document.getElementById('btnEstilos').style.display = 'none';
+  document.getElementById('btnIrANotas').style.display = 'none';
+  document.getElementById('btnIrACalendario').style.display = 'none';
+  document.getElementById('contadorRamos').style.display = 'none';
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('volverMallaDesdeCalendario').style.display = 'block';
+
+  aplicarEstiloDesdeConfig();
+  renderizarCalendario();
+});
+
+document.getElementById('volverMallaDesdeCalendario').addEventListener('click', () => {
+  document.getElementById('calendarioContainer').style.display = 'none';
+  document.getElementById('container').style.display = 'flex';
+  document.querySelector('.file-actions').style.display = 'flex';
+  document.getElementById('btnEstilos').style.display = 'block';
+  document.getElementById('btnIrANotas').style.display = 'block';
+  document.getElementById('btnIrACalendario').style.display = 'block';
+  document.getElementById('contadorRamos').style.display = 'flex';
+  document.getElementById('title').style.display = 'flex';
+  document.getElementById('volverMallaDesdeCalendario').style.display = 'none';
+});
+
+
+cargarConfig().then(() => {
+  aplicarEstiloDesdeConfig();
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('container').style.display = 'flex';
+});
