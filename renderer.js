@@ -22,6 +22,8 @@ const { guardarNuevaNota } = require('./module/guardarNuevaNota');
 const { renderizarCalendario } = require('./module/renderizarCalendario');
 const { abrirModalRecordatorio } = require('./module/abrirModalRecordatorio');
 const { renderCategorias } = require('./module/renderCategorias');
+const { lanzarAlerta, cerrarAlerta } = require('./module/alerta');
+const { lanzarConfirmacion } = require('./module/confirmacion');
 
 let carrera = {
   semestres: [],
@@ -88,7 +90,7 @@ document.getElementById('btnAgregarCategoria').addEventListener('click', async (
   const nombre = document.getElementById('categoriaNombre').value.trim();
   const color = document.getElementById('categoriaColor').value;
   if (!nombre) {
-    alert('Nombre de categoría requerido.');
+    lanzarAlerta('Nombre de categoría requerido.');
     return;
   }
   carrera.categorias.push({ id: crypto.randomUUID(), nombre, color });
@@ -110,20 +112,23 @@ document.getElementById('tieneRequisito').onchange = () => {
 document.getElementById('btnGuardarRamo').addEventListener('click', async () => {
   const nombre = document.getElementById('ramoNombre').value.trim();
   const tieneReq = document.getElementById('tieneRequisito').value;
-  const categoriaId = document.getElementById('ramoCategoria').value;
+  let categoriaId = document.getElementById('ramoCategoria').value;
+
   if (!nombre) {
-    alert('Pon un nombre al ramo.');
+    lanzarAlerta('Pon un nombre al ramo');
     return;
   }
-  if (!categoriaId) {
-    alert('Selecciona una categoría.');
-    return;
+
+  if (!categoriaId || categoriaId === 'none') {
+    categoriaId = 'Sin categoría';
   }
+
   let requisitos = [];
   if (tieneReq === 'si') {
     const checks = document.querySelectorAll('#listaRequisitos input[type="checkbox"]:checked');
     requisitos = Array.from(checks).map(c => c.value);
   }
+
   if (editandoRamo) {
     editandoRamo.nombre = nombre;
     editandoRamo.requisitos = requisitos;
@@ -139,12 +144,14 @@ document.getElementById('btnGuardarRamo').addEventListener('click', async () => 
       categoriaId
     });
   }
+
   actualizarDesbloqueos();
   renderMalla();
-  actualizarContadorRamos()
+  actualizarContadorRamos();
   document.getElementById('modal').style.display = 'none';
   await guardarConfig();
 });
+
 
 document.getElementById('btnCerrarModal').addEventListener('click', () => {
   document.getElementById('modal').style.display = 'none';
@@ -180,11 +187,11 @@ document.getElementById('btnImportar').addEventListener('click', async () => {
         renderMalla();
         await guardarConfig();
       } else {
-        alert('Archivo inválido: estructura incorrecta.');
+        lanzarAlerta('Archivo inválido: estructura incorrecta.');
       }
     } catch (error) {
       console.error(error);
-      alert('Error al leer el archivo JSON.');
+      lanzarAlerta('Error al leer el archivo JSON.');
     }
   }
 });
@@ -219,12 +226,14 @@ document.getElementById('btnImportarEstilo').addEventListener('click', async () 
     await guardarConfig();
 
   } catch (err) {
-    alert('Error al importar el estilo');
+    lanzarAlerta('Error al importar el estilo');
   }
 });
 
-document.getElementById('btnNuevaMalla').addEventListener('click', async () => {
-  if (confirm('¿Seguro quieres crear una malla nueva? Se perderán los datos no guardados.')) {
+document.getElementById('btnNuevaMalla').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  let confirmacion = await lanzarConfirmacion('¿Seguro quieres crear una malla nueva? Se perderán los datos no guardados');
+  if (confirmacion) {
     carrera = { semestres: [], categorias: [] };
     document.getElementById('container').style.display = 'none';
     document.getElementById('controls').style.display = 'block';
@@ -663,7 +672,6 @@ document.getElementById('volverMallaDesdeCalendario').addEventListener('click', 
   document.getElementById('title').style.display = 'flex';
   document.getElementById('volverMallaDesdeCalendario').style.display = 'none';
 });
-
 
 cargarConfig().then(() => {
   aplicarEstiloDesdeConfig();

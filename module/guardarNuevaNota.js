@@ -1,3 +1,5 @@
+const { lanzarAlerta, cerrarAlerta } = require('./alerta');
+
 async function guardarNuevaNota() {
   if (!carrera.notas) carrera.notas = [];
 
@@ -5,7 +7,7 @@ async function guardarNuevaNota() {
   const color = document.getElementById('notaColor').value;
 
   if (!titulo) {
-    alert('Debes escribir un título');
+    lanzarAlerta('Debes escribir un título');
     return;
   }
 

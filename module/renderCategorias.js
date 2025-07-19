@@ -1,3 +1,5 @@
+const { lanzarConfirmacion } = require('./confirmacion');
+
 function renderCategorias() {
   const cont = document.getElementById('categorias');
   cont.innerHTML = '';
@@ -16,8 +18,10 @@ function renderCategorias() {
     btnEliminar.style.border = 'none';
     btnEliminar.style.cursor = 'pointer';
     btnEliminar.style.color = '#fff';
-    btnEliminar.onclick = async () => {
-      if (confirm('¿Eliminar esta categoría?')) {
+    btnEliminar.onclick = async (e) => {
+      e.stopPropagation();
+      let confirmado = await lanzarConfirmacion('¿Eliminar esta categoria?')
+      if (confirmado) {
         carrera.categorias = carrera.categorias.filter(c => c.id !== cat.id);
         carrera.semestres.forEach(s => {
           s.ramos.forEach(r => {

@@ -366,9 +366,10 @@ button.agregar:hover {
   border: 2px solid #ccc;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   z-index: 10000;
-  display: none; /* Se activa con JS */
+  display: none;
+  /* Se activa con JS */
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -744,8 +745,103 @@ input {
   font-weight: bold;
 }
 
-.no-afectar-color, .no-afectar-color * {
+.no-afectar-color,
+.no-afectar-color * {
   color: white !important;
+}
+
+#custom-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#custom-alert-box {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 250px;
+  max-width: 80vw;
+}
+
+#custom-alert-message {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #333;
+}
+
+#custom-alert-ok {
+  background-color: #000;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#custom-alert-ok:hover {
+  background-color: #222;
+}
+
+#custom-confirm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#custom-confirm-box {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 250px;
+}
+
+#custom-confirm-message {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #333;
+}
+
+#custom-confirm-buttons {
+  display: flex;
+  justify-content: space-around;
+}
+
+#custom-confirm-buttons button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#confirm-yes {
+  background: black;
+  color: white;
+}
+
+#confirm-no {
+  background: #ccc;
+  color: black;
 }
 
 @media (max-width: 1000px) {

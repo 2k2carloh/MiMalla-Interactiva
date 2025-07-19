@@ -1,3 +1,5 @@
+const { lanzarConfirmacion } = require('./confirmacion');
+
 function renderMalla() {
   const container = document.getElementById('malla');
   container.innerHTML = '';
@@ -99,12 +101,14 @@ function renderMalla() {
         btnEliminar.innerHTML = `<i class="fa-solid fa-trash"></i>`;
         btnEliminar.onclick = async e => {
           e.stopPropagation();
-          if (confirm('¿Eliminar ramo?')) {
+          const confirmado = await lanzarConfirmacion('¿Quieres eliminar el ramo?');
+          if (confirmado) {
             semestre.ramos = semestre.ramos.filter(r => r.id !== ramo.id);
             renderMalla();
             await guardarConfig();
           }
         };
+
 
         const btnNotas = document.createElement('button');
         btnNotas.innerHTML = `<i class="fa-solid fa-calculator"></i>`;
@@ -141,5 +145,5 @@ function renderMalla() {
 }
 
 module.exports = {
-    renderMalla
+  renderMalla
 }
