@@ -339,6 +339,9 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
   const bordeColor = document.getElementById('estiloBordeColor').value;
   const botonColor = document.getElementById('estiloBotones').value;
   const inputImagen = document.getElementById('estiloFondoImagen');
+  const fondoCalendario = document.getElementById('fondoCalendario').value;
+  const colorCategoria = document.getElementById('colorCategoria').value;
+
 
   document.querySelectorAll('body *').forEach(el => {
     const estaEnBotonFlotante =
@@ -362,9 +365,14 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
     const btn = document.getElementById(id);
     if (btn) {
       btn.style.backgroundColor = botonColor;
-      btn.style.color = '#fff'; // SIEMPRE blanco
+      btn.style.color = '#fff';
     }
   });
+
+  const panelCategorias = document.getElementById('panelCategorias');
+  if (panelCategorias) {
+    panelCategorias.style.backgroundColor = colorCategoria;
+  }
 
   document.querySelectorAll('.semestre').forEach(s => {
     s.style.backgroundColor = fondoSemestres;
@@ -374,10 +382,6 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
   document.querySelectorAll('button:not(.ramo button):not(.categoria button):not(#panelEstilos button)').forEach(btn => {
     btn.style.backgroundColor = botonColor;
     btn.style.color = '#fff';
-  });
-  document.getElementById('categoriaColor').addEventListener('input', (e) => {
-    const nuevoColor = e.target.value;
-    document.getElementById('categoria-color').style.backgroundColor = nuevoColor;
   });
 
   document.getElementById('fondoCalendario').addEventListener('input', (e) => {
@@ -398,6 +402,7 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
       estiloTexto: textoColor,
       estiloBordeColor: bordeColor,
       estiloBotones: botonColor,
+      estiloCalendario: fondoCalendario,
       fondoImagenBase64: null
     };
 
@@ -419,6 +424,7 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
         estiloTexto: textoColor,
         estiloBordeColor: bordeColor,
         estiloBotones: botonColor,
+        estiloCalendario: fondoCalendario,
         fondoImagenBase64: base64
       };
 
@@ -438,22 +444,35 @@ document.getElementById('btnAplicarEstilo').addEventListener('click', () => {
       estiloTexto: textoColor,
       estiloBordeColor: bordeColor,
       estiloBotones: botonColor,
+      estiloCalendario: fondoCalendario,
       fondoImagenBase64: carrera.estilos.fondoImagenBase64
     };
 
     guardarConfig();
+    panel.style.display = 'none';
   }
 });
 
 document.getElementById('categoriaColor').addEventListener('input', async (e) => {
   const nuevoColor = e.target.value;
   carrera.estilos.colorCategoria = nuevoColor;
-  const contCategoria = document.getElementById('categoria-color');
-  if (contCategoria) contCategoria.style.backgroundColor = nuevoColor;
+  document.getElementById('panelCategorias').style.backgroundColor = nuevoColor;
   await guardarConfig();
 });
 
 btnEstilos.addEventListener('click', () => {
+  if (panel.style.display !== 'flex') {
+    const estilos = carrera.estilos || {};
+    document.getElementById('fondoTipo').value = estilos.fondoTipo || 'color';
+    document.getElementById('estiloFondoPagina').value = estilos.estiloFondoPagina || '#ffffff';
+    document.getElementById('estiloFondoSemestres').value = estilos.estiloFondoSemestres || '#f1f1f1';
+    document.getElementById('estiloBordeColor').value = estilos.estiloBordeColor || '#000000';
+    document.getElementById('estiloTexto').value = estilos.estiloTexto || '#000000';
+    document.getElementById('fondoCalendario').value = estilos.estiloCalendario || '#ffffff';
+    document.getElementById('colorRecordatorio').value = estilos.colorRecordatorio || '#ff7675';
+    document.getElementById('estiloBotones').value = estilos.estiloBotones || '#0984e3';
+    document.getElementById('colorCategoria').value = estilos.colorCategoria || '#6c5ce7';
+  }
   panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
 });
 

@@ -28,7 +28,7 @@ h1 {
   opacity: 0.9;
 }
 
-.controls,
+
 .categorias {
   background: #f2f2f2;
   border: 2px solid #ccc;
@@ -42,6 +42,20 @@ h1 {
   padding: 20px;
   flex-shrink: 0;
 }
+.controls{
+    background: #f2f2f2;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  width: 200px;
+  padding: 20px;
+  flex-shrink: 0;
+}
+
 
 .estilo {
   background: #f2f2f2;
@@ -705,7 +719,6 @@ input {
   width: 100%;
   min-height: 80px;
   box-sizing: border-box;
-  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 6px;
   display: flex;

@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "electron": "^37.2.1"
+  },
+  "name": "mimalla",
+  "version": "1.0.0",
+  "main": "main.js",
+  "devDependencies": {
+    "electron-packager": "^17.1.2"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-packager . mimalla --platform=win32 --arch=x64 --out=dist --overwrite"
+  },
+  "keywords": [],
+  "author": "2k2carloh",
+  "license": "ISC",
+  "description": ""
+}

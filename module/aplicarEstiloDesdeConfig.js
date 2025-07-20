@@ -47,14 +47,14 @@ function aplicarEstiloDesdeConfig() {
     }
   });
 
-  const contCategoria = document.getElementById('categoria-color');
-  if (contCategoria && estilos.colorCategoria) {
-    contCategoria.style.backgroundColor = estilos.colorCategoria;
+  const categoriasPanel = document.getElementById('panelCategorias');
+  if (categoriasPanel && estilos.colorCategoria) {
+    categoriasPanel.style.backgroundColor = estilos.colorCategoria;
   }
 
   const calendarioCont = document.getElementById('calendarioContainer');
-  if (calendarioCont && estilos.fondoCalendario) {
-    calendarioCont.style.backgroundColor = estilos.fondoCalendario;
+  if (calendarioCont && estilos.estiloCalendario) {
+    calendarioCont.style.backgroundColor = estilos.estiloCalendario;
   }
 }
 
